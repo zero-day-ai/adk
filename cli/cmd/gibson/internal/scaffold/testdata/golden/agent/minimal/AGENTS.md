@@ -1,0 +1,134 @@
+# AGENTS.md — demo-agent
+
+This directory is a **Gibson agent**. An agent is a stateful, LLM-driven
+gRPC process the Gibson daemon dials when its node in a mission DAG
+becomes active. The daemon supplies a `Harness` to your `Execute()`
+function; the harness owns LLMs, tools, plugins, three-tier memory, and
+the GraphRAG knowledge graph.
+
+This file is the contract. If a doc and the SDK source disagree, **the
+SDK source wins** — paths below are bare so you can grep them.
+
+## What you implement
+
+A type satisfying `agent.Agent`, defined in
+`core/sdk/agent/agent.go`. Or — much shorter — use the builder pattern:
+
+```go
+sdk.NewAgent(
+    sdk.WithName("demo-agent"),
+    sdk.WithVersion("0.1.0"),
+    sdk.WithDescription("..."),
+    sdk.WithLLMSlot("primary", llm.SlotRequirements{MinContextWindow: 8000}),
+    sdk.WithExecuteFunc(execute),
+)
+```
+
+The builder is in `core/sdk/agent/builder.go`; root re-exports are in
+`core/sdk/gibson.go` and `core/sdk/options.go`.
+
+## The Execute function
+
+```go
+func execute(ctx context.Context, h agent.Harness, task agent.Task) (agent.Result, error)
+```
+
+`task.Goal` (string) is the LLM-generated objective for this run. Return
+`agent.Result{Status: agent.StatusCompleted, Output: ...}` or surface
+the error.
+
+## The Harness — your single API surface
+
+Defined in `core/sdk/agent/harness.go`. The harness gives you:
+
+- **LLM access** — `h.Complete(ctx, slot, messages, opts...)`,
+  `h.CompleteWithTools(ctx, slot, messages, tools)`,
+  `h.CompleteStructured(...)`. Slot names match `WithLLMSlot` (e.g.
+  `"primary"`). The harness resolves slots to concrete providers
+  (Anthropic / OpenAI / Gemini / Ollama) at runtime.
+- **Tool execution** — `h.ExecuteTool(ctx, name, input proto.Message)`.
+  Tools are remote, called via Redis work queue. You get the response
+  back as `proto.Message`; assert to your generated type.
+- **Plugin queries** — agents do not invoke plugins directly; ask the
+  daemon to dispatch via `h.QueryPlugin(...)`.
+- **Memory** — `h.Memory().Working()` (ephemeral),
+  `.Mission()` (Redis-backed, full-text search), `.LongTerm()` (vector).
+  See `core/sdk/memory/`.
+- **GraphRAG** — `h.QueryNodes(ctx, query)`, `h.StoreNode(...)`. Don't
+  write Cypher; the SDK abstracts Neo4j.
+- **Sub-agents** — `h.DelegateToAgent(ctx, name, task)`.
+- **Observability** — `h.Logger()` (slog), `h.Tracer()` (OTel).
+
+The full LLM types live in `core/sdk/llm/` (Message, RoleSystem/User/
+Assistant, SlotRequirements, MinContextWindow, FeatureToolUse).
+
+## LLM slots
+
+You declare what the agent *needs*; the platform decides what to give
+it. See `core/sdk/llm/slot.go`. Common features:
+
+| Feature           | When to require                        |
+|-------------------|----------------------------------------|
+| `tool_use`        | You'll call `CompleteWithTools`        |
+| `vision`          | You'll send images                     |
+| `streaming`       | Need token-stream callbacks            |
+| `json_mode`       | Use `CompleteStructured`               |
+
+## Lifecycle
+
+Agents are stateful. Optional methods (defaults supplied if you don't
+override):
+
+- `Initialize(ctx, AgentConfig) error` — once per process start
+- `Health(ctx) types.HealthStatus`     — readiness probe
+- `Shutdown(ctx) error`                — graceful drain
+
+## Enrollment + run loop
+
+1. **Mint identity** — your tenant-admin uses the dashboard's
+   "Register Agent" wizard, which calls
+   `TenantAdminService.CreateAgentIdentity` and returns an
+   `enroll_command`.
+2. **Register** — paste the command's flags:
+   ```sh
+   gibson component register --client-id <id> --client-secret - --gibson-url <url>
+   ```
+   Writes `~/.gibson/agent/credentials` (mode 0600) and verifies the
+   OAuth2 client_credentials grant against the daemon's IdP. Idempotent.
+3. **Run** — `make build && gibson component run`. The CLI starts the
+   binary, which calls `sdk.ServeAgent(...)` from `main.go` and serves
+   gRPC on port 50051. The daemon dials when a mission needs you.
+4. **Verify grants** — `gibson inspect`. Auto-detects the credentials
+   file and calls `IdentityService.WhoAmI`.
+
+## Do not
+
+- Call the daemon directly outside the harness — the harness is the
+  contract; raw gRPC dials skip authz interceptors.
+- Read or write secrets via env vars — your enrollment file is your
+  only credential channel; LLM API keys are owned by the daemon and
+  reach you only via slot-resolved completions.
+- Commit `~/.gibson/agent/credentials` or anything under `~/.gibson/`.
+- Open Neo4j / Redis / etcd directly. The harness wraps everything.
+- Use `replace` directives in `go.mod`, or add a workspace-root
+  `go.work`. Polyrepo discipline pins by SDK tag.
+
+## Where to look in the SDK
+
+| Topic                | Path                                       |
+|----------------------|--------------------------------------------|
+| Agent interface      | `core/sdk/agent/agent.go`                  |
+| Harness API          | `core/sdk/agent/harness.go`                |
+| Builder + options    | `core/sdk/agent/builder.go`, `core/sdk/options.go` |
+| LLM types            | `core/sdk/llm/`                            |
+| Memory tiers         | `core/sdk/memory/`                         |
+| Result + Task types  | `core/sdk/agent/types.go`                  |
+| Serve (gRPC)         | `core/sdk/serve/serve.go`                  |
+| OAuth2 enrollment    | `core/sdk/auth/oidc/agent_credentials.go`  |
+
+## Naming convention
+
+Per the polyrepo steering (`structure.md`), agents follow
+`{domain}-{function}` — e.g. `network-recon`, `prompt-injector`. The
+DNS-label regex `^[a-z][a-z0-9-]{0,61}[a-z0-9]$` is enforced by
+`gibson component init`.

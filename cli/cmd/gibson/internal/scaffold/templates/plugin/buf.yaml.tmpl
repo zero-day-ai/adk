@@ -1,0 +1,16 @@
+version: v2
+# Plugin scaffolds keep <name>.proto at the directory root. The first
+# module excludes vendored deps and generated output to avoid
+# self-references.
+modules:
+  - path: .
+    excludes:
+      - proto/vendor
+      - api/gen
+  - path: proto/vendor
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE

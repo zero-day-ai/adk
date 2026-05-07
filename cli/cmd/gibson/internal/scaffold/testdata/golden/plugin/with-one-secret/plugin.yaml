@@ -1,0 +1,23 @@
+apiVersion: plugin.gibson.zero-day.ai/v1
+kind: Plugin
+metadata:
+  name: byte-identity-secret
+  version: 1.2.3
+  description: "byte-identity-secret plugin"
+  author: ""
+spec:
+  workload_class: plugin
+  runtime: process
+  secrets:
+  - name: cred:api_key
+    scope: startup
+    rotation: live
+    required: true
+  methods:
+  - name: Echo
+    description: "Echo returns the request message unchanged."
+    request_proto: "gibson.plugins.byte-identity-secret.v1.EchoRequest"
+    response_proto: "gibson.plugins.byte-identity-secret.v1.EchoResponse"
+  health:
+    startup_timeout: 30s
+    liveness_interval: 10s

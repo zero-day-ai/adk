@@ -1,0 +1,52 @@
+// Command {{.Name}} is a Gibson tool.
+//
+// See AGENTS.md for the full Gibson tool contract this binary implements,
+// including the platform-wide rule that proto field 100 is reserved for
+// gibson.graphrag.v1.DiscoveryResult on every tool response message.
+package main
+
+import (
+	"context"
+	"log/slog"
+	"os"
+
+	"github.com/zero-day-ai/sdk/serve"
+	"google.golang.org/protobuf/proto"
+
+	pb "github.com/zero-day-ai/{{.Name}}/api/gen/{{.Name}}/v1"
+)
+
+// {{.Name}}Tool is the tool implementation.
+type {{.Name}}Tool struct{}
+
+func (t *{{.Name}}Tool) Name() string              { return "{{.Name}}" }
+func (t *{{.Name}}Tool) Version() string           { return "{{.Version}}" }
+func (t *{{.Name}}Tool) Description() string       { return "{{.Name}} tool" }
+func (t *{{.Name}}Tool) InputMessageType() string  { return "gibson.tools.{{.Name}}.v1.{{.Name}}Request" }
+func (t *{{.Name}}Tool) OutputMessageType() string { return "gibson.tools.{{.Name}}.v1.{{.Name}}Response" }
+
+// ExecuteProto is the tool's entrypoint. The daemon serialises the agent's
+// request into the input proto.Message and unwraps the response.
+//
+// IMPORTANT: populate the Discovery field (proto field 100) with any
+// entities + relationships your tool discovered. The Gibson daemon's
+// DiscoveryProcessor reflects on field 100 of every tool response and
+// writes the entries into the GraphRAG (Neo4j) knowledge graph
+// automatically. See AGENTS.md and core/sdk/api/proto/gibson/graphrag/v1/.
+func (t *{{.Name}}Tool) ExecuteProto(ctx context.Context, in proto.Message) (proto.Message, error) {
+	_ = in.(*pb.{{.Name}}Request) // type-assert; replace with real fields
+
+	// TODO: implement the tool's real behaviour and populate Discovery
+	// with whatever Hosts / Ports / Services / etc. it learned.
+
+	return &pb.{{.Name}}Response{
+		// Discovery: &graphragpb.DiscoveryResult{...},
+	}, nil
+}
+
+func main() {
+	if err := serve.Tool(&{{.Name}}Tool{}); err != nil {
+		slog.Error("serve tool", "err", err)
+		os.Exit(1)
+	}
+}

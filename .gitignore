@@ -1,0 +1,16 @@
+# Compiled binaries
+cli/bin/
+*.test
+*.out
+
+# Coverage
+coverage.html
+coverage.out
+
+# Editor + OS cruft
+.DS_Store
+.idea/
+.vscode/
+
+# Go module / build cache (rare, but possible)
+/vendor/

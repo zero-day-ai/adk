@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package gibson.plugins.byte-identity-multi.v1;
+
+option go_package = "github.com/byte-identity-multi/gen/gibson/plugins/byte-identity-multi/v1;byte-identity-multiv1";
+
+// EchoRequest is the request message for the Echo method.
+message EchoRequest {
+  // message is the text to echo back.
+  string message = 1;
+}
+
+// EchoResponse is the response message for the Echo method.
+message EchoResponse {
+  // reply echoes the request message back unchanged.
+  string reply = 1;
+}

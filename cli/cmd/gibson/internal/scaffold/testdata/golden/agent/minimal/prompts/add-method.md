@@ -1,0 +1,66 @@
+# Adding behaviour to demo-agent
+
+This agent's reasoning lives in the `execute` function in `main.go`.
+Most "add a feature" requests reduce to: extend `execute` with another
+LLM call, tool invocation, memory write, or sub-agent delegation.
+
+## Calling the LLM
+
+```go
+resp, err := h.Complete(ctx, "primary", []llm.Message{
+    {Role: llm.RoleSystem, Content: "You are demo-agent."},
+    {Role: llm.RoleUser,   Content: task.Goal},
+})
+if err != nil {
+    return agent.Result{Status: agent.StatusFailed}, err
+}
+```
+
+If you need tool-use, declare `agent.FeatureToolUse` in your slot's
+`RequiredFeatures` and call `h.CompleteWithTools(...)`. The full
+options surface is in `core/sdk/llm/`.
+
+## Calling a tool
+
+Import the tool's generated proto bindings, then:
+
+```go
+req := &nmappb.NmapRequest{Targets: []string{"10.0.0.0/24"}}
+resp := &nmappb.NmapResponse{}
+if err := h.CallToolProto(ctx, "my-nmap-tool", req, resp); err != nil {
+    return agent.Result{Status: agent.StatusFailed}, err
+}
+```
+
+The agent does **not** populate the GraphRAG knowledge graph from tool
+output — the daemon's DiscoveryProcessor handles that automatically by
+extracting field 100 (`DiscoveryResult`) from the tool's response.
+
+## Storing memory
+
+```go
+// Ephemeral within a task
+h.Memory().Working().Set(ctx, "step", "diagnosing")
+
+// Persistent across the mission
+h.Memory().Mission().Set(ctx, "findings", data, metadata)
+
+// Vector embedding for cross-mission semantic search
+h.Memory().LongTerm().Store(ctx, "summary text", metadata)
+```
+
+## Querying the knowledge graph
+
+```go
+results, err := h.QueryNodes(ctx, query)
+```
+
+Cypher is hidden — the harness owns the Neo4j driver. See
+`core/sdk/graphrag/` for the query type.
+
+## Adding an LLM slot
+
+Edit the `sdk.NewAgent(...)` call in `main.go` to add another
+`sdk.WithLLMSlot(...)`. Slots are independent — you can have a fast
+small-context slot for filtering and a primary slot for reasoning, and
+the harness resolves them to different providers.

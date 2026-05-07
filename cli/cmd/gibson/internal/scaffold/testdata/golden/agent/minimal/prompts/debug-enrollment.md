@@ -1,0 +1,64 @@
+# Debugging demo-agent enrollment
+
+`gibson component register` does three things in order. If it fails,
+the error message names which step.
+
+## 1. OIDC discovery
+
+The CLI fetches `${GIBSON_URL}/.well-known/openid-configuration` to
+discover the issuer + audience. Failures look like
+`enroll: OIDC discovery failed: ...`.
+
+- **Connectivity** — `curl -sS ${GIBSON_URL}/.well-known/openid-configuration`
+  should return JSON.
+- **TLS** — if you're behind a corporate proxy or self-signed CA, the
+  CLI uses Go's default cert pool. Add the CA to your system trust
+  store; `--insecure` is not supported.
+
+## 2. Credentials file write
+
+The CLI writes `~/.gibson/agent/credentials` with mode 0600. Failures
+look like `enroll: write credentials: ...`.
+
+- The credentials file lives at `~/.gibson/agent/credentials`. With
+  `--name <install>`, the path becomes
+  `~/.gibson/agent/credentials.<install>` so multiple agent installs
+  can co-exist on one host.
+- If a file already exists with a **different** `client_id`, the CLI
+  refuses without `--force`. Re-running with the same `client_id` is a
+  no-op success.
+
+## 3. OAuth2 token exchange
+
+The CLI mints a `client_credentials` token against
+`${issuer}/oauth/v2/token`. Failures:
+
+- **`credentials rejected by IdP at <issuer>`** — wrong `client_id` or
+  `client_secret`. Re-issue from the dashboard.
+- **`IdP at <issuer> denied the credential (403)`** — the principal is
+  disabled. Tenant admin must re-enable in the dashboard.
+- **`token exchange failed against <issuer>`** — connectivity or proxy
+  problem. Verify with
+  `curl -X POST ${issuer}/oauth/v2/token -d 'grant_type=client_credentials' -u "${client_id}:${client_secret}"`.
+
+## After successful register
+
+```sh
+gibson inspect
+```
+
+Auto-detects `~/.gibson/agent/credentials`, calls
+`IdentityService.WhoAmI`, and prints your effective grants. If
+`components` is empty, your tenant admin may have minted the principal
+but not granted it any component access yet.
+
+## Reading the on-disk shape
+
+```sh
+jq . ~/.gibson/agent/credentials
+```
+
+Fields: `issuer`, `client_id`, `client_secret`, `audience`,
+`gibson_url`. Defined at `core/sdk/auth/oidc/agent_credentials.go`. The
+SDK refuses to load the file if its mode permissions are looser than
+0600 (`ErrInsecureCredentialFile`).
