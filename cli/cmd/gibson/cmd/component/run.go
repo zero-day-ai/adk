@@ -15,13 +15,6 @@ import (
 	"github.com/zero-day-ai/adk/cmd/gibson/internal/runner"
 )
 
-// RunForKind exec's the compiled component binary in dir with the
-// given kind override. Exported so the back-compat plugin shim
-// (cmd/plugin/run.go) can delegate to the same code path.
-func RunForKind(dir, kindStr string, drainTimeout time.Duration) error {
-	return doRun(dir, kindStr, drainTimeout)
-}
-
 // runCmd returns `gibson component run`.
 func runCmd() *cobra.Command {
 	var (

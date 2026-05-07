@@ -47,7 +47,6 @@ func TestSave_RoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), ".gibson", "workspace.yaml")
 	in := &workspace.Workspace{
 		GibsonURL: "https://example.zero-day.ai",
-		TenantRef: "tenants/acme",
 		Comment:   "anthony's dev",
 	}
 	require.NoError(t, workspace.Save(path, in))
@@ -55,7 +54,6 @@ func TestSave_RoundTrip(t *testing.T) {
 	out, err := workspace.Load(path)
 	require.NoError(t, err)
 	assert.Equal(t, in.GibsonURL, out.GibsonURL)
-	assert.Equal(t, in.TenantRef, out.TenantRef)
 	assert.Equal(t, in.Comment, out.Comment)
 }
 
@@ -66,7 +64,7 @@ func TestSave_RequiresGibsonURL(t *testing.T) {
 
 func TestResolve_FlagWins(t *testing.T) {
 	t.Setenv("GIBSON_URL", "https://from-env")
-	res, err := workspace.Resolve("https://from-flag", "tenants/x")
+	res, err := workspace.Resolve("https://from-flag")
 	require.NoError(t, err)
 	assert.Equal(t, "flag", res.Source)
 	assert.Equal(t, "https://from-flag", res.GibsonURL)
@@ -74,34 +72,30 @@ func TestResolve_FlagWins(t *testing.T) {
 
 func TestResolve_EnvFallback(t *testing.T) {
 	t.Setenv("GIBSON_URL", "https://from-env")
-	t.Setenv("GIBSON_TENANT_REF", "tenants/y")
 
 	wd, _ := os.Getwd()
 	require.NoError(t, os.Chdir(t.TempDir())) // no local workspace
 	defer os.Chdir(wd) //nolint:errcheck
 
-	res, err := workspace.Resolve("", "")
+	res, err := workspace.Resolve("")
 	require.NoError(t, err)
 	assert.Equal(t, "env", res.Source)
 	assert.Equal(t, "https://from-env", res.GibsonURL)
-	assert.Equal(t, "tenants/y", res.TenantRef)
 }
 
 func TestResolve_LocalWorkspace(t *testing.T) {
 	t.Setenv("GIBSON_URL", "")
-	t.Setenv("GIBSON_TENANT_REF", "")
 
 	root := t.TempDir()
 	require.NoError(t, workspace.Save(filepath.Join(root, ".gibson", "workspace.yaml"), &workspace.Workspace{
 		GibsonURL: "https://from-local",
-		TenantRef: "tenants/local",
 	}))
 
 	wd, _ := os.Getwd()
 	require.NoError(t, os.Chdir(root))
 	defer os.Chdir(wd) //nolint:errcheck
 
-	res, err := workspace.Resolve("", "")
+	res, err := workspace.Resolve("")
 	require.NoError(t, err)
 	assert.Equal(t, "local-workspace", res.Source)
 	assert.Equal(t, "https://from-local", res.GibsonURL)
@@ -109,14 +103,13 @@ func TestResolve_LocalWorkspace(t *testing.T) {
 
 func TestResolve_NoSource(t *testing.T) {
 	t.Setenv("GIBSON_URL", "")
-	t.Setenv("GIBSON_TENANT_REF", "")
 	t.Setenv("HOME", t.TempDir()) // no global workspace
 
 	wd, _ := os.Getwd()
 	require.NoError(t, os.Chdir(t.TempDir()))
 	defer os.Chdir(wd) //nolint:errcheck
 
-	_, err := workspace.Resolve("", "")
+	_, err := workspace.Resolve("")
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, workspace.ErrNoGibsonURL))
 }

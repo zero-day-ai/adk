@@ -20,7 +20,6 @@ import (
 // Workspace is the parsed workspace.yaml shape.
 type Workspace struct {
 	GibsonURL      string `yaml:"gibson_url"`
-	TenantRef      string `yaml:"tenant_ref,omitempty"`
 	DefaultKind    string `yaml:"default_kind,omitempty"`
 	DefaultRuntime string `yaml:"default_runtime,omitempty"`
 	Comment        string `yaml:"comment,omitempty"`
@@ -38,7 +37,6 @@ var ErrCredentialField = errors.New("workspace: credentials must not be stored i
 // from, so subcommands can include a friendly hint in error messages.
 type Resolution struct {
 	GibsonURL string
-	TenantRef string
 	Source    string // "flag" | "env" | "local-workspace" | "global-workspace"
 }
 
@@ -46,41 +44,27 @@ type Resolution struct {
 // (parent walk) → global workspace) and returns the first
 // non-empty gibson_url, plus the source label.
 //
-// flagURL/flagTenant are the explicit `--gibson-url`/`--tenant-ref`
-// values from the cobra layer; pass "" if not provided.
-func Resolve(flagURL, flagTenant string) (*Resolution, error) {
+// flagURL is the explicit --gibson-url value from the cobra layer; pass
+// "" if not provided.
+//
+// The CLI does not consume a tenant identifier: tenant context is
+// always embedded in the credentials the dashboard issues
+// (the OAuth2 client_id is scoped to a tenant, the bootstrap token to
+// a tenant install). Workspace config carries no tenant pin.
+func Resolve(flagURL string) (*Resolution, error) {
 	if flagURL != "" {
-		return &Resolution{GibsonURL: flagURL, TenantRef: flagTenant, Source: "flag"}, nil
+		return &Resolution{GibsonURL: flagURL, Source: "flag"}, nil
 	}
 	if env := os.Getenv("GIBSON_URL"); env != "" {
-		ref := flagTenant
-		if ref == "" {
-			ref = os.Getenv("GIBSON_TENANT_REF")
-		}
-		return &Resolution{GibsonURL: env, TenantRef: ref, Source: "env"}, nil
+		return &Resolution{GibsonURL: env, Source: "env"}, nil
 	}
 	if w, _, err := loadLocal(); err == nil && w != nil && w.GibsonURL != "" {
-		return &Resolution{
-			GibsonURL: w.GibsonURL,
-			TenantRef: pick(flagTenant, w.TenantRef),
-			Source:    "local-workspace",
-		}, nil
+		return &Resolution{GibsonURL: w.GibsonURL, Source: "local-workspace"}, nil
 	}
 	if w, err := loadGlobal(); err == nil && w != nil && w.GibsonURL != "" {
-		return &Resolution{
-			GibsonURL: w.GibsonURL,
-			TenantRef: pick(flagTenant, w.TenantRef),
-			Source:    "global-workspace",
-		}, nil
+		return &Resolution{GibsonURL: w.GibsonURL, Source: "global-workspace"}, nil
 	}
 	return nil, ErrNoGibsonURL
-}
-
-func pick(a, b string) string {
-	if a != "" {
-		return a
-	}
-	return b
 }
 
 // LocalPath returns the conventional local workspace path

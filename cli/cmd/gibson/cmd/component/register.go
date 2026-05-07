@@ -131,7 +131,7 @@ func runRegister(stdin io.Reader, opts registerOptions) error {
 
 	resolvedURL := opts.GibsonURL
 	if resolvedURL == "" {
-		res, rerr := workspace.Resolve("", "")
+		res, rerr := workspace.Resolve("")
 		if rerr == nil {
 			resolvedURL = res.GibsonURL
 		}

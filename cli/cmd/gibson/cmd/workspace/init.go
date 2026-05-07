@@ -18,7 +18,6 @@ import (
 func Command() *cobra.Command {
 	var (
 		gibsonURL string
-		tenantRef string
 		comment   string
 		global    bool
 		force     bool
@@ -27,9 +26,9 @@ func Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialise a Gibson workspace (writes .gibson/workspace.yaml)",
-		Long: `init writes a workspace.yaml that pins GIBSON_URL and the active
-tenant reference for this workspace, so subsequent ` + "`" + `gibson component <verb>` + "`" + `
-calls do not require the flags every time.
+		Long: `init writes a workspace.yaml that pins GIBSON_URL for this workspace,
+so subsequent ` + "`" + `gibson component <verb>` + "`" + ` calls do not require
+the flag every time.
 
 By default the file is written to ./.gibson/workspace.yaml (per-project).
 Pass --global to write to ~/.gibson/workspace.yaml (machine-wide
@@ -38,16 +37,17 @@ fallback).
 The workspace file is non-secret. It MUST NOT contain client_id /
 client_secret / bootstrap_token / host_key / password / secret / token
 fields — Load() rejects them at parse time. Credentials live at
-~/.gibson/{agent,tool,plugin}/credentials with mode 0600.
+~/.gibson/{agent,tool,plugin}/credentials with mode 0600. Tenant
+context is embedded in those credentials, so workspace.yaml carries
+no tenant pin.
 
 Examples:
-  gibson init --gibson-url https://api.zero-day.ai --tenant-ref tenants/acme
-  gibson init --global --gibson-url https://api.zero-day.ai --tenant-ref tenants/acme
+  gibson init --gibson-url https://api.zero-day.ai
+  gibson init --global --gibson-url https://api.zero-day.ai
   gibson init --force --gibson-url ...   # overwrite existing`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runInit(cmd.OutOrStdout(), cmd.ErrOrStderr(), initOptions{
 				GibsonURL: gibsonURL,
-				TenantRef: tenantRef,
 				Comment:   comment,
 				Global:    global,
 				Force:     force,
@@ -56,7 +56,6 @@ Examples:
 	}
 
 	cmd.Flags().StringVar(&gibsonURL, "gibson-url", "", "Gibson platform URL (e.g. https://api.zero-day.ai). Required.")
-	cmd.Flags().StringVar(&tenantRef, "tenant-ref", "", "Tenant reference (e.g. tenants/acme). Optional.")
 	cmd.Flags().StringVar(&comment, "comment", "", "Optional free-form note.")
 	cmd.Flags().BoolVar(&global, "global", false, "Write to ~/.gibson/workspace.yaml instead of ./.gibson/workspace.yaml.")
 	cmd.Flags().BoolVar(&force, "force", false, "Overwrite an existing workspace file.")
@@ -69,13 +68,12 @@ Examples:
 
 type initOptions struct {
 	GibsonURL string
-	TenantRef string
 	Comment   string
 	Global    bool
 	Force     bool
 }
 
-func runInit(stdout, stderr interface{ Write([]byte) (int, error) }, opts initOptions) error {
+func runInit(stdout, _ interface{ Write([]byte) (int, error) }, opts initOptions) error {
 	path, err := resolvePath(opts.Global)
 	if err != nil {
 		return err
@@ -91,7 +89,6 @@ func runInit(stdout, stderr interface{ Write([]byte) (int, error) }, opts initOp
 
 	w := &wsi.Workspace{
 		GibsonURL: opts.GibsonURL,
-		TenantRef: opts.TenantRef,
 		Comment:   opts.Comment,
 	}
 	if err := wsi.Save(path, w); err != nil {
@@ -99,9 +96,6 @@ func runInit(stdout, stderr interface{ Write([]byte) (int, error) }, opts initOp
 	}
 
 	fmt.Fprintf(stdout, "init: wrote %s\n", path)
-	if opts.TenantRef == "" {
-		fmt.Fprintf(stderr, "WARN: no --tenant-ref set; subcommands needing tenant context will require --tenant-ref\n")
-	}
 	return nil
 }
 
