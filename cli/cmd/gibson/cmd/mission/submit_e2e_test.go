@@ -33,7 +33,7 @@ import (
 // follow-up integration test in the daemon suite).
 func TestSubmit_e2e_recon_template(t *testing.T) {
 	if os.Getenv("E2E_GIBSON_E2E") == "" {
-		t.Skip("set E2E_GIBSON_E2E=1 to run gibson-cli submit e2e against a live daemon")
+		t.Skip("set E2E_GIBSON_E2E=1 to run `gibson mission submit` e2e against a live daemon")
 	}
 	daemonAddr := os.Getenv("GIBSON_DAEMON_ADDR")
 	if daemonAddr == "" {
