@@ -1,0 +1,29 @@
+name: templates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  templates-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Install cue
+        # CUE module file pins language.version v0.16.0; install the
+        # matching CLI release.
+        run: go install cuelang.org/go/cmd/cue@v0.16.1
+
+      - name: Run templates-check
+        # Vets every template.cue against itself (concrete eval),
+        # regenerates template.json, asserts no drift.
+        # Spec: mission-authoring-cue Requirement 9.
+        run: make templates-check
