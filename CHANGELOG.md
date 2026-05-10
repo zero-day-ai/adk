@@ -1,4 +1,14 @@
-# ADK Changelog
+# Changelog
+
+## 1.0.0 (2026-05-10)
+
+
+### Features
+
+* add CI, CodeQL, and Scorecard workflows ([#1](https://github.com/zero-day-ai/adk/issues/1)) ([8cc9f59](https://github.com/zero-day-ai/adk/commit/8cc9f59e3e81c49b42e827da19fe791fbf05b2b5))
+* install release-please and pr-title-lint ([#2](https://github.com/zero-day-ai/adk/issues/2)) ([ed5c342](https://github.com/zero-day-ai/adk/commit/ed5c3423ac7d4b34fa2a70f77108cf13b04a9b28))
+
+## ADK Changelog
 
 ## Unreleased
 
