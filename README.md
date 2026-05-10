@@ -1,5 +1,7 @@
 # Gibson Agent Development Kit (ADK)
 
+> **Workflow rules:** see [`zero-day-ai/.github` → `AGENTS.md`](https://github.com/zero-day-ai/.github/blob/main/AGENTS.md) for branch / PR / commit / release / rebase rules. SDK bumps arrive as auto-generated PRs from the SDK fan-out workflow.
+
 The ADK exists so an **AI coding agent** — Claude Code, Cursor, or any
 LLM driving your editor — can take "I want a Gibson agent that drains
 Kubernetes nodes safely" and turn it into a registered, running
