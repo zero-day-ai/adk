@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/zero-day-ai/adk/compare/v1.1.0...v1.2.0) (2026-05-13)
+
+
+### Features
+
+* **scaffold:** auto-wire OntologyContributor for tool scaffolds ([#15](https://github.com/zero-day-ai/adk/issues/15)) ([f36db9b](https://github.com/zero-day-ai/adk/commit/f36db9b158ab63079a65d8c7b85986e93913a90f))
+
 ## [1.1.0](https://github.com/zero-day-ai/adk/compare/v1.0.0...v1.1.0) (2026-05-13)
 
 
