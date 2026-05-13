@@ -6,7 +6,7 @@ host_key.json
 ~/.gibson/plugin/byte-identity-secret/
 
 # Build artifacts
-byte-identity-secret
+/byte-identity-secret
 /dist/
 
 # Go toolchain
