@@ -2,7 +2,7 @@ module github.com/zero-day-ai/adk
 
 go 1.25.0
 
-toolchain go1.25.5
+toolchain go1.25.10
 
 require (
 	buf.build/go/protovalidate v1.2.0
