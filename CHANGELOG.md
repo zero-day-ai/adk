@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/zero-day-ai/adk/compare/v1.0.0...v1.1.0) (2026-05-13)
+
+
+### Features
+
+* add ontology codegen and component scaffold updates ([#9](https://github.com/zero-day-ai/adk/issues/9)) ([5a19643](https://github.com/zero-day-ai/adk/commit/5a1964386bc4d01fba577f418858b738c83f7d7a))
+
+
+### Bug Fixes
+
+* **ci:** adk CI hygiene cleanup ([#5](https://github.com/zero-day-ai/adk/issues/5)) ([e3d48aa](https://github.com/zero-day-ai/adk/commit/e3d48aa0c9dedf12fcec5794f560af121937b87f))
+
 ## 1.0.0 (2026-05-10)
 
 
