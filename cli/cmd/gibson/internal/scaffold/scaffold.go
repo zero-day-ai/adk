@@ -19,6 +19,8 @@ import (
 	"io/fs"
 	"strings"
 	"text/template"
+
+	"github.com/zero-day-ai/sdk/taxonomy"
 )
 
 //go:embed all:templates
@@ -116,7 +118,39 @@ func Render(input ScaffoldInput) (map[string][]byte, error) {
 		return nil, err
 	}
 
+	// For kinds that scaffold an ontology.yaml (agent, tool), pre-generate
+	// gen/ontology_extension.go so the project compiles immediately after
+	// `gibson component init`. The developer regenerates it via
+	// `gibson component generate` (or `gibson component build`) after editing
+	// ontology.yaml.
+	if err := renderOntologyGen(out); err != nil {
+		return nil, err
+	}
+
 	return out, nil
+}
+
+// renderOntologyGen parses the rendered ontology.yaml (if present) and adds
+// gen/ontology_extension.go to the output map. Tools auto-wire this via the
+// optional serve.OntologyContributor interface on the {Name}Tool struct;
+// agents currently leave the file unused (a future SDK change will surface
+// it via sdk.WithOntologyExtension).
+func renderOntologyGen(out map[string][]byte) error {
+	yamlBytes, ok := out["ontology.yaml"]
+	if !ok {
+		// Plugin kind has no ontology.yaml; nothing to generate.
+		return nil
+	}
+	ont, err := taxonomy.Parse(yamlBytes)
+	if err != nil {
+		return fmt.Errorf("scaffold: parse rendered ontology.yaml: %w", err)
+	}
+	src, err := GenerateBytes(ont)
+	if err != nil {
+		return fmt.Errorf("scaffold: render ontology_extension.go: %w", err)
+	}
+	out["gen/ontology_extension.go"] = src
+	return nil
 }
 
 // renderPrompts walks templates/<kind>/prompts/ and renders each template

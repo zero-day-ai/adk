@@ -10,10 +10,12 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/zero-day-ai/sdk/graphrag"
 	"github.com/zero-day-ai/sdk/serve"
 	"google.golang.org/protobuf/proto"
 
 	pb "github.com/zero-day-ai/demo-tool/api/gen/demo-tool/v1"
+	"github.com/zero-day-ai/demo-tool/gen"
 )
 
 // demo-toolTool is the tool implementation.
@@ -24,6 +26,20 @@ func (t *demo-toolTool) Version() string           { return "0.1.0" }
 func (t *demo-toolTool) Description() string       { return "demo-tool tool" }
 func (t *demo-toolTool) InputMessageType() string  { return "gibson.tools.demo-tool.v1.demo-toolRequest" }
 func (t *demo-toolTool) OutputMessageType() string { return "gibson.tools.demo-tool.v1.demo-toolResponse" }
+
+// OntologyExtension implements the optional serve.OntologyContributor
+// interface. The SDK's serve.Tool runtime type-asserts against it at
+// enrollment and forwards the result to the daemon's reasoner. The
+// gen.OntologyExtension() function is byte-stable and regenerated from
+// ontology.yaml via `gibson component generate`.
+//
+// If your tool has no ontology to contribute, leaving the prefixes /
+// hierarchies / equivalences / ifps blocks empty in ontology.yaml makes
+// this method a harmless no-op — the SDK skips an empty extension on the
+// wire.
+func (t *demo-toolTool) OntologyExtension() graphrag.OntologyExtension {
+	return gen.OntologyExtension()
+}
 
 // ExecuteProto is the tool's entrypoint. The daemon serialises the agent's
 // request into the input proto.Message and unwraps the response.
