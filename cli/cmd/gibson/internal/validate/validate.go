@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/zero-day-ai/sdk/plugin/manifest"
+	"github.com/zero-day-ai/sdk/taxonomy"
 
 	"github.com/zero-day-ai/adk/cmd/gibson/internal/component"
 )
@@ -90,6 +91,10 @@ func Run(dir string, kind component.Kind) (*Report, error) {
 	default:
 		r.addError("component.yaml", fmt.Sprintf("unknown kind %q", kind))
 	}
+
+	// Validate ontology.yaml if present (all kinds support it).
+	validateOntology(dir, r)
+
 	return r, nil
 }
 
@@ -172,6 +177,31 @@ func checkField100(protoPath string, r *Report) {
 	if !field100Regex.Match(b) {
 		r.addError(protoPath,
 			"tool response message must declare field 100 as gibson.graphrag.v1.DiscoveryResult; see AGENTS.md")
+	}
+}
+
+// validateOntology checks ontology.yaml (if present) using taxonomy.Parse
+// and Ontology.Validate. Absence of the file is not an error — the file is
+// optional for all component kinds.
+func validateOntology(dir string, r *Report) {
+	ontologyPath := filepath.Join(dir, "ontology.yaml")
+	b, err := os.ReadFile(ontologyPath)
+	if os.IsNotExist(err) {
+		return // optional file
+	}
+	if err != nil {
+		r.addError(ontologyPath, fmt.Sprintf("read ontology.yaml: %v", err))
+		return
+	}
+
+	ont, err := taxonomy.Parse(b)
+	if err != nil {
+		r.addError(ontologyPath, fmt.Sprintf("parse ontology.yaml: %v", err))
+		return
+	}
+
+	if err := ont.Validate(); err != nil {
+		r.addError(ontologyPath, fmt.Sprintf("validate ontology.yaml: %v", err))
 	}
 }
 

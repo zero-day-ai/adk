@@ -19,6 +19,8 @@ func Command() *cobra.Command {
 
 Subcommands:
   init      scaffold a new component directory from templates
+  generate  regenerate gen/ from taxonomy.yaml and ontology.yaml
+  build     generate + validate + go build (one-step developer loop)
   validate  local schema + proto checks against component.yaml / plugin.yaml
   register  consume a dashboard-issued enroll_command (no admin RPC auto-mint)
   run       run the compiled component binary, supervising signals and exit code 75
@@ -27,6 +29,8 @@ In a directory containing a component.yaml, --kind is auto-detected
 from the file. Outside such a directory, --kind is required.`,
 	}
 	cmd.AddCommand(initCmd())
+	cmd.AddCommand(generateCmd())
+	cmd.AddCommand(buildCmd())
 	cmd.AddCommand(validateCmd())
 	cmd.AddCommand(registerCmd())
 	cmd.AddCommand(runCmd())

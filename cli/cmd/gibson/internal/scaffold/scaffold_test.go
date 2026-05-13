@@ -195,6 +195,7 @@ func TestRender_AgentAllFilesPresent(t *testing.T) {
 	for _, name := range []string{
 		"component.yaml", "main.go", "go.mod",
 		"Makefile", "Dockerfile", ".gitignore", "README.md",
+		"ontology.yaml",
 	} {
 		assert.Contains(t, files, name, "agent scaffold missing %q", name)
 	}
@@ -216,6 +217,7 @@ func TestRender_ToolAllFilesPresent(t *testing.T) {
 		"component.yaml", "main.go", "go.mod",
 		"Makefile", "Dockerfile", ".gitignore", "README.md",
 		"buf.yaml", "buf.gen.yaml",
+		"ontology.yaml",
 		"api/proto/demo-tool/v1/demo-tool.proto",
 		"proto/vendor/gibson/graphrag/v1/graphrag.proto",
 		"proto/vendor/taxonomy/v1/taxonomy.proto",

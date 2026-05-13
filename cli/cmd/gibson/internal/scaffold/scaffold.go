@@ -43,14 +43,15 @@ var pluginOutputFilename = map[string]string{
 
 // agentOutputFilename maps templates/agent/ basenames to output paths.
 var agentOutputFilename = map[string]string{
-	"component.yaml.tmpl": "component.yaml",
-	"main.go.tmpl":        "main.go",
-	"go.mod.tmpl":         "go.mod",
-	"Makefile.tmpl":       "Makefile",
-	"Dockerfile.tmpl":     "Dockerfile",
-	".gitignore.tmpl":     ".gitignore",
-	"README.md.tmpl":      "README.md",
-	"AGENTS.md.tmpl":      "AGENTS.md",
+	"component.yaml.tmpl":  "component.yaml",
+	"main.go.tmpl":         "main.go",
+	"go.mod.tmpl":          "go.mod",
+	"Makefile.tmpl":        "Makefile",
+	"Dockerfile.tmpl":      "Dockerfile",
+	".gitignore.tmpl":      ".gitignore",
+	"README.md.tmpl":       "README.md",
+	"AGENTS.md.tmpl":       "AGENTS.md",
+	"ontology.yaml.tmpl":   "ontology.yaml",
 }
 
 // toolOutputFilename maps templates/tool/ top-level basenames to output paths.
@@ -58,17 +59,18 @@ var agentOutputFilename = map[string]string{
 // "api/proto/<name>/v1/<name>.proto". Vendored protos under
 // templates/tool/proto/vendor/ are copied verbatim by walkVendoredProtos.
 var toolOutputFilename = map[string]string{
-	"component.yaml.tmpl": "component.yaml",
-	"main.go.tmpl":        "main.go",
-	"go.mod.tmpl":         "go.mod",
-	"Makefile.tmpl":       "Makefile",
-	"Dockerfile.tmpl":     "Dockerfile",
-	".gitignore.tmpl":     ".gitignore",
-	"README.md.tmpl":      "README.md",
-	"AGENTS.md.tmpl":      "AGENTS.md",
-	"buf.yaml.tmpl":       "buf.yaml",
-	"buf.gen.yaml.tmpl":   "buf.gen.yaml",
-	"tool.proto.tmpl":     "", // dynamic: api/proto/<name>/v1/<name>.proto
+	"component.yaml.tmpl":  "component.yaml",
+	"main.go.tmpl":         "main.go",
+	"go.mod.tmpl":          "go.mod",
+	"Makefile.tmpl":        "Makefile",
+	"Dockerfile.tmpl":      "Dockerfile",
+	".gitignore.tmpl":      ".gitignore",
+	"README.md.tmpl":       "README.md",
+	"AGENTS.md.tmpl":       "AGENTS.md",
+	"buf.yaml.tmpl":        "buf.yaml",
+	"buf.gen.yaml.tmpl":    "buf.gen.yaml",
+	"ontology.yaml.tmpl":   "ontology.yaml",
+	"tool.proto.tmpl":      "", // dynamic: api/proto/<name>/v1/<name>.proto
 }
 
 // Render produces the full directory contents for a single component
