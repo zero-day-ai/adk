@@ -1,11 +1,10 @@
 // Package component implements the unified `gibson component` verb
-// group: init, validate, register, run.
+// group: init, generate, build, validate, register, run.
 //
 // Each subcommand is kind-aware: when the working directory contains a
 // component.yaml, the kind is auto-detected; otherwise --kind is
-// required. This single verb surface replaces the per-kind sprawl of
-// the back-compat aliases (gibson plugin <verb>, gibson agent enroll,
-// gibson tool enroll), which now delegate here.
+// required. This is the single verb surface for the agent / tool /
+// plugin developer workflow.
 package component
 
 import "github.com/spf13/cobra"
