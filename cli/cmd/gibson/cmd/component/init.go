@@ -71,9 +71,6 @@ Examples:
 	return cmd
 }
 
-// runInit is the public-from-this-package implementation. Exported as
-// RunInit so the back-compat plugin shim can delegate without
-// duplicating logic.
 func runInit(name, kindStr, dir string, withSecrets []string, force bool) error {
 	if !nameRegex.MatchString(name) {
 		return fmt.Errorf("component init: name %q must match ^[a-z][a-z0-9-]{0,61}[a-z0-9]$ (DNS-label style)", name)
@@ -149,13 +146,6 @@ func runInit(name, kindStr, dir string, withSecrets []string, force bool) error 
 	}
 	fmt.Println("  gibson component run")
 	return nil
-}
-
-// RunInit is an exported entry-point for the back-compat plugin shim
-// (cmd/plugin/init.go) so it can dispatch to component init without
-// importing private symbols.
-func RunInit(name, kindStr, dir string, withSecrets []string, force bool) error {
-	return runInit(name, kindStr, dir, withSecrets, force)
 }
 
 // resolveSDKVersion reads the SDK version from go.mod via

@@ -1,12 +1,14 @@
 // Command gibson is the Gibson Agent Development Kit command-line interface.
 //
-// It provides tooling for plugin authors, agent developers, and operators
-// working with the Gibson platform:
+// It provides tooling for agent / tool / plugin authors and operators
+// working with the Gibson platform. Top-level verb groups:
 //
-//	gibson plugin init <name>   scaffold a new plugin directory
-//	gibson plugin validate      validate a plugin manifest
-//	gibson plugin enroll        first-time registration with the daemon
-//	gibson plugin run           run a plugin locally via plugin.Serve
+//	gibson workspace   initialise and manage a Gibson workspace
+//	gibson component   scaffold, build, validate, register, run components
+//	                   (--kind agent | tool | plugin)
+//	gibson mission     author, validate, render, and submit missions
+//	gibson inspect     show identity + permissions for the local credential
+//	gibson docs        emit machine-readable docs (JSON Schemas, etc.)
 package main
 
 import (

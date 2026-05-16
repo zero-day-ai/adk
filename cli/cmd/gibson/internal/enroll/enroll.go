@@ -1,12 +1,13 @@
-// Package enroll implements the shared enrollment logic backing
-// `gibson agent enroll` and `gibson tool enroll`.
+// Package enroll implements the shared enrollment logic for the
+// agent and tool kinds of `gibson component register`.
 //
-// The two CLI surfaces are structurally identical — they both write a
-// JSON credentials file at `~/.gibson/<kind>/credentials` (mode 0600),
-// then verify the credentials by performing an OAuth2 client_credentials
-// token exchange against the daemon's OIDC issuer. This file
-// contains both flows; the per-kind cobra commands are thin wrappers
-// that delegate here.
+// Both kinds are structurally identical — they write a JSON credentials
+// file at `~/.gibson/<kind>/credentials` (mode 0600), then verify the
+// credentials by performing an OAuth2 client_credentials token exchange
+// against the daemon's OIDC issuer. The kind-dispatch lives in
+// cmd/component/register.go; this package holds the underlying flow so
+// register.go and the inspect / run commands all share one
+// implementation.
 //
 // Spec: component-bootstrap-e2e Requirements 3 and 4.
 package enroll
