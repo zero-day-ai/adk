@@ -146,6 +146,32 @@ import (
 	// blocked_domains lists network domains (e.g., "prod.example.com") that
 	// agents must not contact. Enforcement is best-effort at the tool level.
 	blockedDomains?: [...string] @protobuf(8,string,name=blocked_domains)
+	// Fields 9-12 promoted from gibson.daemon.v1.MissionConstraints under
+	// ADR 0004 (https://github.com/zero-day-ai/docs/blob/main/adr/0004-canonical-mission-constraints.md).
+	// The daemon-local type is deleted in the same change; this is now the
+	// single canonical MissionConstraints for the entire platform.
+
+	// max_turns_per_agent caps the number of agent turns (Observe→Think→Act
+	// iterations) for any single agent node in the mission. 0 means unlimited.
+	maxTurnsPerAgent?: int32 @protobuf(9,int32,name=max_turns_per_agent,"(buf.validate.field).int32=")
+
+	// allowed_techniques is the allowlist of attack technique IDs (taxonomy)
+	// that agents may use during the mission. Empty list means no allowlist
+	// (any technique may be used unless blocked).
+	allowedTechniques?: [...string] @protobuf(10,string,name=allowed_techniques)
+
+	// blocked_techniques is the blocklist of attack technique IDs that
+	// agents must not use, regardless of allowed_techniques. Empty list
+	// means no blocklist.
+	blockedTechniques?: [...string] @protobuf(11,string,name=blocked_techniques)
+
+	// max_tokens_per_call is the mission-level cap on tokens consumed per
+	// individual LLM invocation. Overridden by per-node *NodeConfig.
+	// max_tokens_per_call when set on a specific node. 0 means unlimited
+	// from this mechanism. Spec: mission-schema-canonicalization
+	// Requirement 5. Enforced by internal/harness/per_call_cap.go's
+	// EffectivePerCallCap() in the daemon (wired in M4, gibson#133).
+	maxTokensPerCall?: int32 @protobuf(12,int32,name=max_tokens_per_call,"(buf.validate.field).int32=")
 }
 
 // MissionDependencies specifies required components for a mission
