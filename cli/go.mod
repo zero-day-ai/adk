@@ -9,7 +9,7 @@ require (
 	cuelang.org/go v0.16.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
-	github.com/zero-day-ai/sdk v0.105.0
+	github.com/zero-day-ai/sdk v0.105.1
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/grpc v1.81.0
 	google.golang.org/protobuf v1.36.11
