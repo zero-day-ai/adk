@@ -6,35 +6,37 @@
 // passive sources.
 //
 // Override before submitting:
-//   target_ref: "<target-name-or-id>"
+//   targetRef: "<target-name-or-id>"
 //
 // Spec: mission-authoring-cue Requirement 7.
 
-mission: {
+import missionv1 "github.com/zero-day-ai/sdk/api/proto/gibson/mission/v1"
+
+mission: missionv1.#MissionDefinition & {
 	name:        "recon"
 	description: "Reconnaissance across a target's exposed surface."
 	version:     "1.0.0"
-	target_ref:  ""
+	targetRef:   ""
 
 	nodes: {
 		scan: {
 			id:   "scan"
-			type: "NODE_TYPE_AGENT"
-			agent_config: {
-				agent_name: "nmap-agent"
+			type: missionv1.#NODE_TYPE_AGENT
+			agentConfig: {
+				agentName: "nmap-agent"
 			}
 		}
 		enrich: {
 			id:   "enrich"
-			type: "NODE_TYPE_AGENT"
-			agent_config: {
-				agent_name: "shodan-agent"
+			type: missionv1.#NODE_TYPE_AGENT
+			agentConfig: {
+				agentName: "shodan-agent"
 			}
 		}
 	}
 	edges: [
 		{from: "scan", to: "enrich"},
 	]
-	entry_points: ["scan"]
-	exit_points: ["enrich"]
+	entryPoints: ["scan"]
+	exitPoints: ["enrich"]
 }

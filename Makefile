@@ -5,7 +5,7 @@
 # MDX). This Makefile drives the templates pipeline; use
 # cli/Makefile for the CLI itself.
 
-.PHONY: templates templates-export templates-vet templates-check ensure-cue
+.PHONY: templates templates-export templates-vet templates-check ensure-cue ensure-cli
 
 # Templates ship as triplets: template.cue (authoring source),
 # template.json (cue export output, committed for dashboard
@@ -21,20 +21,27 @@ ensure-cue:
 	}
 
 # templates-export: regenerate template.json for every template
-# from its template.cue source.
+# from its template.cue source via the gibson CLI (schema-aware,
+# single code path). Produces proto-shaped JSON (camelCase keys)
+# matching the format the daemon and dashboard consume.
 # Spec: mission-authoring-cue Requirement 7.
-templates-export: ensure-cue
+templates-export: ensure-cli
 	@for t in $(TEMPLATES); do \
 		echo "exporting templates/$$t/template.json"; \
-		cue export templates/$$t/template.cue --out json -e mission > templates/$$t/template.json; \
+		./cli/bin/gibson mission render templates/$$t/template.cue > templates/$$t/template.json; \
 	done
 
-# templates-vet: assert each template.cue concretely evaluates
-# (no unresolved fields, no contradictions). Run by CI on every PR.
-templates-vet: ensure-cue
+# ensure-cli: build the gibson CLI binary used for schema-aware vet.
+ensure-cli:
+	@(cd cli && go build -o bin/gibson ./cmd/gibson)
+
+# templates-vet: assert each template.cue is structurally valid by
+# running it through the gibson CLI validator, which resolves the SDK
+# CUE schema via the embedded overlay (single code path, no raw cue).
+templates-vet: ensure-cli
 	@for t in $(TEMPLATES); do \
-		echo "vet templates/$$t/template.cue"; \
-		cue vet templates/$$t/template.cue || exit 1; \
+		echo "validate templates/$$t/template.cue"; \
+		./cli/bin/gibson mission validate templates/$$t/template.cue || exit 1; \
 	done
 
 # templates-check: regenerate template.json files and assert

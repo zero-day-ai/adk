@@ -6,25 +6,27 @@
 // (point at a target that wraps the repo set).
 //
 // Override before submitting:
-//   target_ref: "<repo-target-name-or-id>"
+//   targetRef: "<repo-target-name-or-id>"
 //
 // Spec: mission-authoring-cue Requirement 7.
 
-mission: {
+import missionv1 "github.com/zero-day-ai/sdk/api/proto/gibson/mission/v1"
+
+mission: missionv1.#MissionDefinition & {
 	name:        "secrets-audit"
 	description: "Scan a repository for committed secrets."
 	version:     "1.0.0"
-	target_ref:  ""
+	targetRef:   ""
 
 	nodes: {
 		leaks: {
 			id:   "leaks"
-			type: "NODE_TYPE_AGENT"
-			agent_config: {
-				agent_name: "gitleaks-agent"
+			type: missionv1.#NODE_TYPE_AGENT
+			agentConfig: {
+				agentName: "gitleaks-agent"
 			}
 		}
 	}
-	entry_points: ["leaks"]
-	exit_points: ["leaks"]
+	entryPoints: ["leaks"]
+	exitPoints: ["leaks"]
 }

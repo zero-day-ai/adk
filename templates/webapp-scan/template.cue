@@ -4,35 +4,37 @@
 // active vulnerability scan against discovered endpoints.
 //
 // Override before submitting:
-//   target_ref: "<target-name-or-id>"
+//   targetRef: "<target-name-or-id>"
 //
 // Spec: mission-authoring-cue Requirement 7.
 
-mission: {
+import missionv1 "github.com/zero-day-ai/sdk/api/proto/gibson/mission/v1"
+
+mission: missionv1.#MissionDefinition & {
 	name:        "webapp-scan"
 	description: "Crawl + active scan a web application."
 	version:     "1.0.0"
-	target_ref:  ""
+	targetRef:   ""
 
 	nodes: {
 		crawl: {
 			id:   "crawl"
-			type: "NODE_TYPE_AGENT"
-			agent_config: {
-				agent_name: "webcrawl-agent"
+			type: missionv1.#NODE_TYPE_AGENT
+			agentConfig: {
+				agentName: "webcrawl-agent"
 			}
 		}
 		scan: {
 			id:   "scan"
-			type: "NODE_TYPE_AGENT"
-			agent_config: {
-				agent_name: "webvuln-agent"
+			type: missionv1.#NODE_TYPE_AGENT
+			agentConfig: {
+				agentName: "webvuln-agent"
 			}
 		}
 	}
 	edges: [
 		{from: "crawl", to: "scan"},
 	]
-	entry_points: ["crawl"]
-	exit_points: ["scan"]
+	entryPoints: ["crawl"]
+	exitPoints: ["scan"]
 }
