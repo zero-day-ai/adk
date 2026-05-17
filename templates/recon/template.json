@@ -1,33 +1,33 @@
 {
-  "name": "recon",
-  "description": "Reconnaissance across a target's exposed surface.",
-  "version": "1.0.0",
-  "nodes": {
-    "enrich": {
-      "id": "enrich",
-      "type": "NODE_TYPE_AGENT",
-      "agentConfig": {
-        "agentName": "shodan-agent"
+  "name":  "recon",
+  "description":  "Reconnaissance across a target's exposed surface.",
+  "version":  "1.0.0",
+  "nodes":  {
+    "enrich":  {
+      "id":  "enrich",
+      "type":  "NODE_TYPE_AGENT",
+      "agentConfig":  {
+        "agentName":  "shodan-agent"
       }
     },
-    "scan": {
-      "id": "scan",
-      "type": "NODE_TYPE_AGENT",
-      "agentConfig": {
-        "agentName": "nmap-agent"
+    "scan":  {
+      "id":  "scan",
+      "type":  "NODE_TYPE_AGENT",
+      "agentConfig":  {
+        "agentName":  "nmap-agent"
       }
     }
   },
-  "edges": [
+  "edges":  [
     {
-      "from": "scan",
-      "to": "enrich"
+      "from":  "scan",
+      "to":  "enrich"
     }
   ],
-  "entryPoints": [
+  "entryPoints":  [
     "scan"
   ],
-  "exitPoints": [
+  "exitPoints":  [
     "enrich"
   ]
 }
