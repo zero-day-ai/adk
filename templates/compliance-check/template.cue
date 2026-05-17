@@ -4,25 +4,27 @@
 // policy baseline (e.g., CIS benchmarks for AWS / GCP / Azure).
 //
 // Override before submitting:
-//   target_ref: "<cloud-target-name-or-id>"
+//   targetRef: "<cloud-target-name-or-id>"
 //
 // Spec: mission-authoring-cue Requirement 7.
 
-mission: {
+import missionv1 "github.com/zero-day-ai/sdk/api/proto/gibson/mission/v1"
+
+mission: missionv1.#MissionDefinition & {
 	name:        "compliance-check"
 	description: "Audit cloud configuration against a policy baseline."
 	version:     "1.0.0"
-	target_ref:  ""
+	targetRef:   ""
 
 	nodes: {
 		inspect: {
 			id:   "inspect"
-			type: "NODE_TYPE_AGENT"
-			agent_config: {
-				agent_name: "compliance-agent"
+			type: missionv1.#NODE_TYPE_AGENT
+			agentConfig: {
+				agentName: "compliance-agent"
 			}
 		}
 	}
-	entry_points: ["inspect"]
-	exit_points: ["inspect"]
+	entryPoints: ["inspect"]
+	exitPoints: ["inspect"]
 }

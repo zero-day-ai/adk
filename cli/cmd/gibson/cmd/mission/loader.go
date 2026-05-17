@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"cuelang.org/go/cue"
 	missionv1 "github.com/zero-day-ai/sdk/api/gen/gibson/mission/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 	sigsyaml "sigs.k8s.io/yaml"
@@ -86,19 +87,33 @@ func parseJSON(src []byte) (*missionv1.MissionDefinition, error) {
 	return def, nil
 }
 
-// parseCUE compiles a CUE document and emits proto-shaped JSON,
-// then routes through parseJSON. The CUE evaluator is loaded from
-// cuelang.org/go.
+// parseCUE compiles a CUE document, validates its structure against the
+// embedded #MissionDefinition schema when the file contains import
+// statements (catching unknown fields and type mismatches before
+// protojson), emits proto-shaped JSON, then routes through parseJSON.
 //
-// Cue evaluation context: a single fresh CUE context, the input
-// is compiled as one file, the resulting concrete value is
-// marshaled as JSON. No imports are followed in v1 — the
-// authoring path uses inline CUE; importing the published
-// gibson/mission/v1/#MissionDefinition definition is a future
-// addition that will require pulling the bundle's CUE files into
-// the eval context.
+// Two compilation paths:
+//   - Files with import statements use compileCUEWithSchema, which
+//     resolves "github.com/zero-day-ai/sdk/api/proto/gibson/mission/v1"
+//     against the schema bundle embedded in the binary (see schema.go).
+//     This is the schema-aware path introduced in adk#20.
+//   - Files without imports use compileCUE (fast path; supports inline
+//     CUE authoring without the import boilerplate).
+//
+// Error ordering guarantee: for import-using files, structural CUE
+// errors (unknown fields, incompatible types) surface as "cue build:
+// ..." errors before the protojson.Unmarshal step.
 func parseCUE(src []byte) (*missionv1.MissionDefinition, error) {
-	ctx, instance, err := compileCUE(src)
+	var (
+		ctx      *cue.Context
+		instance cue.Value
+		err      error
+	)
+	if hasImports(src) {
+		ctx, instance, err = compileCUEWithSchema(src)
+	} else {
+		ctx, instance, err = compileCUE(src)
+	}
 	if err != nil {
 		return nil, err
 	}
