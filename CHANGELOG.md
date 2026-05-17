@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.104.1](https://github.com/zero-day-ai/adk/compare/v0.104.0...v0.104.1) (2026-05-17)
+
+
+### Bug Fixes
+
+* regen templates/*/template.json to drop double-space after colons ([#30](https://github.com/zero-day-ai/adk/issues/30)) ([3e73160](https://github.com/zero-day-ai/adk/commit/3e731604c632e4a60f288d3a51edd10e963f27fa))
+
 ## [1.2.0](https://github.com/zero-day-ai/adk/compare/v1.1.0...v1.2.0) (2026-05-13)
 
 
