@@ -175,6 +175,57 @@ make test-integration    # build-the-scaffold smoke tests; needs network + buf
 make update-golden       # regenerate scaffold goldens after intentional changes
 ```
 
+## Embedded mission CUE schema (DO NOT HAND-EDIT)
+
+The gibson CLI embeds a minimal CUE module at
+`cli/cmd/gibson/cmd/mission/schema/` so that `gibson mission validate`
+resolves `import "github.com/zero-day-ai/sdk/api/proto/gibson/mission/v1"`
+without requiring the SDK source tree on the customer's machine.
+
+The file
+`cli/cmd/gibson/cmd/mission/schema/api/proto/gibson/mission/v1/mission_definition_proto_gen.cue`
+is GENERATED from the SDK proto at
+`opensource/sdk/api/proto/gibson/mission/v1/mission_definition.proto`
+via `cue import proto` plus two ADK-specific transforms (package
+rename `missionpb`→`v1`, alias-rewrite of the `typespb` import). Do
+not edit it by hand — drift between the embedded schema and the
+authoritative SDK proto means `gibson mission validate` would
+silently accept authoring constructs the daemon then rejects at
+submit time.
+
+### Regenerate
+
+When the SDK's `mission_definition.proto` changes (and the SDK is
+re-released), refresh the embedded copy:
+
+```sh
+# Requires the SDK sibling clone at ../sdk and the cue binary
+# (go install cuelang.org/go/cmd/cue@v0.16.1).
+make generate
+cd cli && go test ./cmd/gibson/cmd/mission/...   # confirm CUE still loads
+git add cli/cmd/gibson/cmd/mission/schema/ && git commit -m "chore: refresh embedded mission CUE from SDK"
+```
+
+The other files in the schema bundle (`cue.mod/module.cue` and the
+`typespb` stub at `api/gen/gibson/types/v1/types_stub.cue`) are
+hand-maintained — they exist precisely to wrap the auto-generated
+file in an offline-friendly module. Edit those by hand when the SDK's
+typespb surface or module declaration changes; they are NOT touched
+by `make generate`.
+
+### Drift gate
+
+`make check-cue-fresh` (run automatically in CI via
+`.github/workflows/ci.yml`) regenerates the embedded CUE and
+byte-diffs against the committed copy. PRs that change the SDK
+mission proto without refreshing the embedded copy fail this check
+with a clear `STALE: run 'make generate' to refresh embedded CUE`
+message. The gate has two modes (FULL with SDK sibling, STRUCTURAL
+without — see `scripts/check-cue-fresh.sh` for the contract);
+neither has a `--skip` flag.
+
+Spec: zero-day-ai/adk#27.
+
 ## Spec
 
 The full design + tasks for this CLI lives at
