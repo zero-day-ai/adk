@@ -1,33 +1,33 @@
 {
-  "name":  "webapp-scan",
-  "description":  "Crawl + active scan a web application.",
-  "version":  "1.0.0",
-  "nodes":  {
-    "crawl":  {
-      "id":  "crawl",
-      "type":  "NODE_TYPE_AGENT",
-      "agentConfig":  {
-        "agentName":  "webcrawl-agent"
+  "name": "webapp-scan",
+  "description": "Crawl + active scan a web application.",
+  "version": "1.0.0",
+  "nodes": {
+    "crawl": {
+      "id": "crawl",
+      "type": "NODE_TYPE_AGENT",
+      "agentConfig": {
+        "agentName": "webcrawl-agent"
       }
     },
-    "scan":  {
-      "id":  "scan",
-      "type":  "NODE_TYPE_AGENT",
-      "agentConfig":  {
-        "agentName":  "webvuln-agent"
+    "scan": {
+      "id": "scan",
+      "type": "NODE_TYPE_AGENT",
+      "agentConfig": {
+        "agentName": "webvuln-agent"
       }
     }
   },
-  "edges":  [
+  "edges": [
     {
-      "from":  "crawl",
-      "to":  "scan"
+      "from": "crawl",
+      "to": "scan"
     }
   ],
-  "entryPoints":  [
+  "entryPoints": [
     "crawl"
   ],
-  "exitPoints":  [
+  "exitPoints": [
     "scan"
   ]
 }
