@@ -2,10 +2,11 @@
 #
 # The ADK contains two roots: cli/ (gibson CLI binary + tooling)
 # and templates/ (mission templates dual-published as CUE + JSON +
-# MDX). This Makefile drives the templates pipeline; use
-# cli/Makefile for the CLI itself.
+# MDX). This Makefile drives the templates pipeline and cross-cutting
+# checks (check-cue-fresh); use cli/Makefile for the CLI itself.
 
-.PHONY: templates templates-export templates-vet templates-check ensure-cue ensure-cli
+.PHONY: templates templates-export templates-vet templates-check \
+	ensure-cue ensure-cli check check-cue-fresh generate regen-cue
 
 # Templates ship as triplets: template.cue (authoring source),
 # template.json (cue export output, committed for dashboard
@@ -58,3 +59,34 @@ templates-check: templates-vet templates-export
 
 # templates: alias the most common workflow (vet + export).
 templates: templates-vet templates-export
+
+# regen-cue: regenerate the embedded mission CUE schema in the gibson
+# CLI from the SDK proto. Requires the SDK sibling clone at ../sdk and
+# the cue binary on PATH. See scripts/regen-cue.sh for the pipeline
+# (cue import proto + ADK-specific package/import normalization).
+# Spec: zero-day-ai/adk#27.
+regen-cue:
+	@scripts/regen-cue.sh
+
+# check-cue-fresh: drift gate for the ADK-embedded CUE schema.
+# FAILS CI when the committed *_proto_gen.cue under
+# cli/cmd/gibson/cmd/mission/schema/ has drifted from the SDK proto.
+# Two modes (see scripts/check-cue-fresh.sh for the full contract):
+#   FULL       — SDK sibling present: regen + byte-diff.
+#   STRUCTURAL — SDK sibling absent : sentinel-header check only.
+# Spec: zero-day-ai/adk#27 (mission-author-experience epic, M3).
+check-cue-fresh:
+	@scripts/check-cue-fresh.sh
+
+# generate: ALIAS for the maintainer workflow that refreshes the
+# embedded mission CUE schema. Failure of check-cue-fresh resolves
+# by running `make generate` and committing the result.
+generate: regen-cue
+
+# check: top-level aggregate target. Use this as the local pre-push
+# smoke test. Currently runs check-cue-fresh only; templates-check is
+# tracked separately under zero-day-ai/adk#28 (pre-existing whitespace
+# drift in committed template.json) and will be re-added to this
+# aggregate once that issue lands.
+check: check-cue-fresh
+	@echo "check: ok"

@@ -39,5 +39,63 @@ jobs:
       - name: Test
         run: go test -race ./...
 
+  # check-cue-fresh: drift gate for the embedded mission CUE schema.
+  # Mirrors the dashboard's check-mission-schema-fresh pattern. Fails
+  # when cli/cmd/gibson/cmd/mission/schema/.../mission_definition_proto_gen.cue
+  # has drifted from the SDK proto.
+  #
+  # Runs in FULL mode here because we explicitly check out the SDK
+  # sibling repository alongside this one — same workspace layout the
+  # script expects on a developer's workstation
+  # (~/Code/zero-day.ai/opensource/{adk,sdk}). The SDK is checked out
+  # without history (depth: 1) and at its default branch, which is the
+  # right answer for a drift gate: drift is defined against the
+  # current SDK main, the same surface every customer-installed CLI
+  # will eventually consume.
+  #
+  # Spec: zero-day-ai/adk#27 (mission-author-experience epic, M3).
+  check-cue-fresh:
+    name: check-cue-fresh
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        # Override the file-level defaults.run.working-directory (cli/)
+        # because check-cue-fresh runs scripts/ at the repo root.
+        working-directory: adk
+    steps:
+      - name: Checkout adk
+        uses: actions/checkout@v4
+        with:
+          path: adk
+
+      - name: Checkout sdk (sibling)
+        uses: actions/checkout@v4
+        with:
+          repository: zero-day-ai/sdk
+          path: sdk
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: adk/cli/go.mod
+          cache: true
+          cache-dependency-path: adk/cli/go.sum
+
+      - name: Install cue
+        run: go install cuelang.org/go/cmd/cue@v0.16.1
+
+      - name: Prime buf protovalidate cache (SDK dep)
+        working-directory: sdk
+        run: |
+          # The cue import proto pipeline reads
+          # protovalidate's .proto files from buf's module cache;
+          # `buf dep update` populates that cache against the SDK's
+          # buf.yaml/buf.lock without generating any code.
+          npm ci --no-audit --no-fund
+          ./node_modules/.bin/buf dep update
+
+      - name: Run check-cue-fresh
+        run: make check-cue-fresh
+
   no-monorepo-shortcuts:
     uses: zero-day-ai/.github/.github/workflows/no-monorepo-shortcuts.yml@main

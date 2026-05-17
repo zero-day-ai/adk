@@ -1,3 +1,14 @@
+// TEST FIXTURE — intentionally stale.
+//
+// This file is a snapshot of the embedded CUE schema with the
+// MissionDefinition.workspace field deliberately deleted. The
+// freshness gate test (scripts/check_cue_fresh_test.go) feeds this
+// file to scripts/check-cue-fresh.sh via ADK_CUE_FIXTURE and asserts
+// the script exits non-zero with a STALE message that surfaces the
+// missing field.
+//
+// Do not consume this file from any production code path.
+//
 // Schema evolution policy (mission-schema-canonicalization Requirement 7):
 //
 //   1. NodeType, Language, BackoffStrategy, and any future enum values
@@ -81,13 +92,6 @@ import (
 
 	// CreatedAt is the timestamp when the mission definition was created
 	createdAt?: time.Time @protobuf(14,google.protobuf.Timestamp,name=created_at)
-
-	// Workspace configures repository cloning + workspace
-	// management for agents that need code access. Optional;
-	// missions without code interaction omit this field.
-	//
-	// Spec: mission-schema-canonicalization (mirror migration).
-	workspace?: #WorkspaceConfig @protobuf(15,WorkspaceConfig)
 
 	// Constraints declares mission-level operational limits. When present,
 	// these are the authoritative constraints for the mission DAG — they
