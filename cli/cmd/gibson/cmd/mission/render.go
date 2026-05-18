@@ -1,6 +1,8 @@
 package mission
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -25,27 +27,41 @@ Useful for:
 - Diffing two mission files semantically (compile both then diff JSON).
 - Piping into other tooling (` + "`gibson mission render m.cue | jq …`" + `).
 
-Output is deterministic: protojson uses stable proto field ordering;
-sigs.k8s.io/yaml uses lexical key ordering.`,
+Output is deterministic: protojson controls proto field ordering (camelCase,
+stable); encoding/json.Indent normalises whitespace, eliminating the
+binary-hash-seeded extra space that protojson's internal detrand inserts
+after colons to make builds non-reproducible.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			def, err := loadMissionFile(args[0], formatHint)
 			if err != nil {
 				return err
 			}
-			marshalOpts := protojson.MarshalOptions{
-				Multiline: true,
-				Indent:    "  ",
-			}
-			jsonBytes, err := marshalOpts.Marshal(def)
+			// EmitUnpopulated: false (default) — omit zero-value fields so the
+			// JSON stays minimal.  UseProtoNames: false (default) — camelCase
+			// output matches what the daemon and dashboard expect.
+			//
+			// We do NOT pass Multiline/Indent to protojson because its
+			// internal detrand package intentionally seeds whitespace from a
+			// hash of the compiled binary, making the exact spacing non-
+			// reproducible across builds.  Instead we marshal compact and
+			// then re-indent through encoding/json, which is deterministic.
+			marshalOpts := protojson.MarshalOptions{}
+			compactBytes, err := marshalOpts.Marshal(def)
 			if err != nil {
 				return fmt.Errorf("protojson marshal: %w", err)
 			}
+			// Re-indent via stdlib JSON: deterministic "  " indent, single
+			// space after colon, consistent across every build and platform.
+			var jsonBytes bytes.Buffer
+			if err := json.Indent(&jsonBytes, compactBytes, "", "  "); err != nil {
+				return fmt.Errorf("json indent: %w", err)
+			}
 			switch outFormat {
 			case "json", "":
-				fmt.Fprintln(cmd.OutOrStdout(), string(jsonBytes))
+				fmt.Fprintln(cmd.OutOrStdout(), jsonBytes.String())
 			case "yaml":
-				yamlBytes, err := sigsyaml.JSONToYAML(jsonBytes)
+				yamlBytes, err := sigsyaml.JSONToYAML(jsonBytes.Bytes())
 				if err != nil {
 					return fmt.Errorf("yaml convert: %w", err)
 				}
