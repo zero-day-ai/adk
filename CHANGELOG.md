@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.104.2](https://github.com/zero-day-ai/adk/compare/v0.104.1...v0.104.2) (2026-05-20)
+
+
+### Bug Fixes
+
+* stabilise templates-export by routing through encoding/json.Indent ([#35](https://github.com/zero-day-ai/adk/issues/35)) ([e93e9d9](https://github.com/zero-day-ai/adk/commit/e93e9d93c6a89e6329ce10e42d2563df259a5dae))
+
 ## [0.104.1](https://github.com/zero-day-ai/adk/compare/v0.104.0...v0.104.1) (2026-05-17)
 
 
